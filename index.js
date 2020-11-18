@@ -1,8 +1,7 @@
 const express = require("express")
 const server = express()
-const Sequelize = require("sequelize")
-const sql = new Sequelize("mysql://root@localhost:3306/encuentro50") 
-
+const sql = require("./connection")
+const routeUsuarios = require("./route/usuarios")
 //const validarBody = require("./MIDDLEWARES/validarBody") falta estoo*
 
 // sql.query("select * from usuarios").then(r => {
@@ -12,23 +11,8 @@ const sql = new Sequelize("mysql://root@localhost:3306/encuentro50")
 // }) lo que hace es traer todos los usuarios.
 
 
+server.use("/usuarios", routeUsuarios)
 
-//GET USUARIOS
-server.get("/usuarios", async (req,res) => {
-    try {
-        sql.query("SELECT * FROM usuarios",
-            {type: sql.QueryTypes.SELECT} 
-            // O HACEMOS ESTO, O EN VEZ DE USAR UNA LINEA AL PEDO, AL console.log(result[0]) le agregamos eso nada mas, el [0]
-        ).then(result => {
-            console.log(result)
-            res.status(200).json(result)
-        })
-    } catch (error) {
-        console.log(error.message)
-        res.status(500).json({err: error.message})
-        
-    }
-})
 
 //MIDDLEWARE
 server.use(express.json())
