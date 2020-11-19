@@ -2,41 +2,73 @@ const express = require("express")
 const server = express()
 const sql = require("./connection")
 const routeUsuarios = require("./route/usuarios")
-//const validarBody = require("./MIDDLEWARES/validarBody") falta estoo*
-
-// sql.query("select * from usuarios").then(r => {
-//     console.log(r)
-// }).catch(err =>{
-//     console.log(err)
-// }) lo que hace es traer todos los usuarios.
 
 
-server.use("/usuarios", routeUsuarios)
+/**
+ * ENDPOINTS A CREAR Y CONECTAR CON LA BASE DE DATOS DE CANCIONES.
+ * - Agregar una canción
+- Modificar una canción por ID
+- Eliminar una canción por su ID
+- Retornar todas las canciones
+- Buscar canciones por su nombre
 
+ */
+//middle
+let validarBody = async(err,req,res,next)=>{
+    if (err) {
+        throw new Error("ocurrio un error al recibir el body")
+    }else if(!req.body){
+        res.status(400).send("te olvidaste del body")
+    }else if(body){
+        next()
+    }
+}
 
+ //post de cancion: nombre duracion album banda fecha_publicacion
+server.post("./canciones", validarBody, (req,res)=>{
+    let body = req.body
+    try {
+        sql.query(`
+            INSERT INTO canciones (nombre, duracion, album, banda, fecha_publicacion)
+            VALUES(?,?,?,?,?)
+            `,
+            {
+                replacements: [
+                    body.nombre,
+                    body.duracion,
+                    body.album,
+                    body.banda,
+                    body.fecha_publicacion,
+                ]
+            }
+        ).then(result=>{
+            console.log(result[0])
+            res.status(200).json(result[0])
+        })
+    } catch (error) {
+        console.lor(error.message)
+        res.status(500).json({err: error.message})
+    }
+})
 //MIDDLEWARE
 server.use(express.json())
 
+//GET USUARIOS
+server.use("/usuarios", routeUsuarios)
 
 //POST LOGIN
 server.post("/login", async (req,res)=>{
     const usuario = req.body
-    
-    // con esto de abajo , las querys, basicamente es el acceso a las tablas que tengo creadas
-    // en la base de datos encuentro 50
     try {
         sql.query("SELECT * FROM usuarios WHERE usuario = :nombreUsuario AND contrasenia = :contraseniaUsuario", {
             replacements: {
                 nombreUsuario: usuario.usuario, 
                 contraseniaUsuario: usuario.contrasenia
-            },
-            type: sql.QueryTypes.SELECT // si no pongo esto, me trae al body del response, 2 veces el mismo usuario.
-
+            }
         }).then(result => {
-            console.log(result)
+            console.log(result[0])
             //generar token
-            res.status(200).json(result)
-
+            res.status(200).json(result[0])
         })
     } catch (error) {
         console.log(error)
@@ -52,7 +84,7 @@ server.post("/register", (req,res)=>{
         sql.query(`
             INSERT INTO usuarios (nombre,apellido,usuario,contrasenia)
             VALUES(?,?,?,?)
-            `,// lo que se hace con los ? y con el array de abajo es, remplaza los items del [] por los ? de forma lineal
+            `,
             {
                 replacements: [
                     usuario.nombre, 
@@ -60,12 +92,11 @@ server.post("/register", (req,res)=>{
                     usuario.usuario, 
                     usuario.contrasenia
                 ]
-                //type: sql.QueryTypes.INSERT  // ESTE ES EL TIPO DE ACCION QUE QUERES QUE REALICE EL CODIGO QUE ESCRIBISTE, insert,select update , saraza
             }
         ).then(result=>{
-            console.log(result)
+            console.log(result[0])
             //token 
-            res.status(200).json(result)
+            res.status(200).json(result[0])
         })
     } catch (error) {
         console.log(error.message)
