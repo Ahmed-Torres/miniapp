@@ -4,6 +4,8 @@ const sql = require("./connection")
 const routeUsuarios = require("./route/usuarios")
 
 
+
+
 /**
  * ENDPOINTS A CREAR Y CONECTAR CON LA BASE DE DATOS DE CANCIONES.
  * - Agregar una canción
@@ -13,6 +15,10 @@ const routeUsuarios = require("./route/usuarios")
 - Buscar canciones por su nombre
 
  */
+const Sequelize = require("sequelize")
+const dbBAC = new Sequelize("mysql://root@localhost:3306/encuentro50ejari")
+
+
 //middle
 let validarBody = async(err,req,res,next)=>{
     if (err) {
@@ -25,10 +31,10 @@ let validarBody = async(err,req,res,next)=>{
 }
 
  //post de cancion: nombre duracion album banda fecha_publicacion
-server.post("./canciones", validarBody, (req,res)=>{
+server.post("/canciones", validarBody, (req,res)=>{
     let body = req.body
     try {
-        sql.query(`
+        dbBAC.query(`
             INSERT INTO canciones (nombre, duracion, album, banda, fecha_publicacion)
             VALUES(?,?,?,?,?)
             `,
@@ -50,6 +56,45 @@ server.post("./canciones", validarBody, (req,res)=>{
         res.status(500).json({err: error.message})
     }
 })
+
+//- Modificar una canción por ID
+server.put("/canciones/:id", (req,res)=>{
+    const body = req.body
+    const idCancion = req.params["id"]
+    try {
+        dbBAC.query(`
+            UPDATE canciones
+                SET nombre = ?,
+            WHERE id = ?
+            `,
+            {
+                replacements: [
+                    body.nombre,
+                    idCancion
+                ]
+            }).then(result=>{
+                console.log(result[0])
+                res.status(200).json(result[0])
+            })
+    } catch (error) {
+        console.log(error.message)
+        res.status(500).json({err:error.message})
+        
+    }
+})
+// - Retornar todas las canciones
+server.get("/canciones", (req,res)=>{
+    try {
+        dbBAC.query(`SELECT * FROM canciones`).then(result=>{
+            console.log(result[0])
+            res.status(200).json(result[0])
+        })
+    } catch (error) {
+        console.log(error.message)
+        res.status(500).json({err:error.message})
+    }
+})
+
 //MIDDLEWARE
 server.use(express.json())
 
